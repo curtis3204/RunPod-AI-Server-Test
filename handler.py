@@ -5,12 +5,7 @@ import cv2
 from diffusers import AutoPipelineForText2Image, ControlNetModel
 import gc
 import os
-
-#  Debug: List model directory contents at runtime
-# print("[Contents of /data/RoomDreamingModel]")
-# for root, dirs, files in os.walk("/data/RoomDreamingModel"):
-#     for file in files:
-#         print(os.path.join(root, file))
+from PIL import Image
 
 # Global pipeline initialization
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -67,8 +62,12 @@ def decode_base64_image(base64_str, input_name="unknown"):
         img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
         if img is None:
             raise ValueError(f"Failed to decode {input_name} into an image")
-        img_tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).to(device) / 255.0
-        return img_tensor
+        
+        # Convert BGR (OpenCV) to RGB and create PIL Image
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        pil_image = Image.fromarray(img_rgb)
+        print(f"[Decoded {input_name} to PIL Image with size: {pil_image.size}]")
+        return pil_image
     except Exception as e:
         print(f"Error decoding {input_name}: {str(e)}")
         raise
@@ -76,31 +75,33 @@ def decode_base64_image(base64_str, input_name="unknown"):
 def handler(event):
     try:
         input_data = event.get("input", {})
-        print(f"Received input: {input_data}")
         pos_prompt = input_data.get("pos_prompt", "")
         neg_prompt = input_data.get("neg_prompt", "")
         depth_image = input_data.get("depth_image", "")
         seg_image = input_data.get("seg_image", "")
         depth_weight = float(input_data.get("depth_control_weight", 0.5))
         seg_weight = float(input_data.get("seg_control_weight", 0.5))
+        print(f"[Received input] pos_prompt: {pos_prompt}, neg_prompt: {neg_prompt}, depth_weight: {depth_weight}, seg_weight: {seg_weight}")
 
         if not (pos_prompt and depth_image and seg_image):
             return {"error": "Missing required inputs"}
 
-        depth_tensor = decode_base64_image(depth_image, "depth_image")
-        seg_tensor = decode_base64_image(seg_image, "seg_image")
+        depth_pil = decode_base64_image(depth_image, "depth_image")
+        seg_pil = decode_base64_image(seg_image, "seg_image")
 
         with torch.no_grad():
             image = pipe(
                 prompt=pos_prompt,
                 negative_prompt=neg_prompt,
-                control_image=[depth_tensor, seg_tensor],
+                image=[depth_pil, seg_pil],  # Use 'image' key as in Model.py
                 controlnet_conditioning_scale=[depth_weight, seg_weight],
                 guidance_scale=7.5,
                 num_inference_steps=25
             ).images[0]
 
-        _, buffer = cv2.imencode(".png", np.array(image))
+        # Convert PIL Image to base64 for output
+        image_array = np.array(image)
+        _, buffer = cv2.imencode(".jpg", cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
         image_base64 = base64.b64encode(buffer).decode("utf-8")
 
         torch.cuda.empty_cache()
