@@ -24,16 +24,18 @@ RUN pip3 install --no-cache-dir --upgrade pip
 # Pre-download models during build
 RUN python3 -c "from huggingface_hub import snapshot_download; \
     snapshot_download(repo_id='NTUHCILAB/RoomDreamingModel', local_dir='/data/RoomDreamingModel'); \
-    # snapshot_download(repo_id='lllyasviel/Annotators', local_dir='/data/preprocessor'); \
-    # snapshot_download(repo_id='h94/IP-Adapter', local_dir='/data/ip-adapter', allow_patterns='models/*'); \
     snapshot_download(repo_id='lllyasviel/control_v11f1p_sd15_depth', local_dir='/data/ControlNetModel/depth'); \
     snapshot_download(repo_id='lllyasviel/control_v11p_sd15_seg', local_dir='/data/ControlNetModel/seg')"
+
+# Debug: List downloaded files to verify
+RUN find /data -type f -exec ls -lh {} \; > /data_contents.txt
 
 # Final image
 FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS runtime
 
-# Copy preloaded models
+# Copy preloaded models and debug file
 COPY --from=builder /data /data
+COPY --from=builder /data_contents.txt /data_contents.txt
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
@@ -53,7 +55,7 @@ RUN pip3 install --no-cache-dir diffusers==0.31.0
 RUN pip3 install --no-cache-dir controlnet_aux==0.0.6
 RUN pip3 install --no-cache-dir mediapipe==0.10.5
 RUN pip3 install --no-cache-dir xformers==0.0.27
-RUN pip3 install --no-cache-dir accelerate==1.0.1  # Note: You had 1.5.1 earlier; sticking with 1.0.1 as per logs
+RUN pip3 install --no-cache-dir accelerate==1.0.1
 RUN pip3 install --no-cache-dir runpod
 
 # Copy application code
