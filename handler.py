@@ -18,12 +18,14 @@ controlnets = [
     ControlNetModel.from_pretrained(
         "/data/ControlNetModel/depth",
         torch_dtype=torch.float16,
-        local_files_only=True
+        local_files_only=True,
+        use_safetensors=False,
     ),
     ControlNetModel.from_pretrained(
         "/data/ControlNetModel/seg",
         torch_dtype=torch.float16,
-        local_files_only=True
+        local_files_only=True,
+        use_safetensors=False
     )
 ]
 try:
@@ -32,6 +34,7 @@ try:
         controlnet=controlnets,
         torch_dtype=torch.float16,
         local_files_only=True,
+        use_safetensors=False,
         safety_checker=None
     ).to(device)
     pipe.enable_xformers_memory_efficient_attention()
