@@ -22,7 +22,7 @@ controlnets = [
         "/data/ControlNetModel/seg",
         torch_dtype=torch.float16,
         local_files_only=True,
-        use_safetensors=False
+        use_safetensors=False,
     )
 ]
 try:
@@ -43,15 +43,11 @@ except Exception as e:
 
 def decode_base64_image(base64_str, input_name="unknown"):
     try:
-        # Log the raw input for debugging
         print(f"[Decoding {input_name} base64 string: {base64_str[:50]}... (length: {len(base64_str)})]")
-
-        # Strip data URI prefix if present (e.g., "data:image/png;base64,")
         if base64_str.startswith("data:image"):
             base64_str = base64_str.split(",", 1)[1]
             print(f"Stripped data URI prefix from {input_name}. New length: {len(base64_str)}")
         
-        # Add padding if necessary
         padding_needed = len(base64_str) % 4
         if padding_needed:
             base64_str += "=" * (4 - padding_needed)
@@ -63,7 +59,6 @@ def decode_base64_image(base64_str, input_name="unknown"):
         if img is None:
             raise ValueError(f"Failed to decode {input_name} into an image")
         
-        # Convert BGR (OpenCV) to RGB and create PIL Image
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         pil_image = Image.fromarray(img_rgb)
         print(f"[Decoded {input_name} to PIL Image with size: {pil_image.size}]")
@@ -75,13 +70,13 @@ def decode_base64_image(base64_str, input_name="unknown"):
 def handler(event):
     try:
         input_data = event.get("input", {})
+        print(f"Received input: {input_data}")
         pos_prompt = input_data.get("pos_prompt", "")
         neg_prompt = input_data.get("neg_prompt", "")
         depth_image = input_data.get("depth_image", "")
         seg_image = input_data.get("seg_image", "")
         depth_weight = float(input_data.get("depth_control_weight", 0.5))
         seg_weight = float(input_data.get("seg_control_weight", 0.5))
-        print(f"[Received input] pos_prompt: {pos_prompt}, neg_prompt: {neg_prompt}, depth_weight: {depth_weight}, seg_weight: {seg_weight}")
 
         if not (pos_prompt and depth_image and seg_image):
             return {"error": "Missing required inputs"}
@@ -93,21 +88,23 @@ def handler(event):
             image = pipe(
                 prompt=pos_prompt,
                 negative_prompt=neg_prompt,
-                image=[depth_pil, seg_pil],  # Use 'image' key as in Model.py
+                image=[depth_pil, seg_pil],
                 controlnet_conditioning_scale=[depth_weight, seg_weight],
                 guidance_scale=7.5,
                 num_inference_steps=25
             ).images[0]
 
-        # Convert PIL Image to base64 for output
+        # Convert PIL Image to base64 with data URI prefix
         image_array = np.array(image)
-        _, buffer = cv2.imencode(".jpg", cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
+        _, buffer = cv2.imencode(".jpeg", cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
         image_base64 = base64.b64encode(buffer).decode("utf-8")
+        image_base64_with_prefix = f"data:image/jpeg;base64,{image_base64}"
+        print(f"[Generated image base64 length: {len(image_base64)}]")
 
         torch.cuda.empty_cache()
         gc.collect()
 
-        return {"image": image_base64}
+        return {"image": image_base64_with_prefix}
 
     except Exception as e:
         print(f"Handler error: {str(e)}")
