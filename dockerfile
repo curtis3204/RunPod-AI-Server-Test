@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip
+
 # Install huggingface_hub for model downloads
 RUN pip3 install --no-cache-dir huggingface_hub
 
@@ -18,14 +21,22 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Keeps Python from buffering stdout and stderr
 ENV PYTHONUNBUFFERED=1
 
-# Upgrade pip
-RUN pip3 install --no-cache-dir --upgrade pip
+# Set the working directory
+WORKDIR /data
 
-# Pre-download models during build
-RUN python3 -c "from huggingface_hub import snapshot_download; \
+# Create a directory for models
+RUN mkdir -p /data/RoomDreamingModel
+RUN mkdir -p /data/ControlNetModel/depth
+RUN mkdir -p /data/ControlNetModel/seg
+
+
+RUN python3 -c "import sys; from huggingface_hub import snapshot_download; \
+try: \
     snapshot_download(repo_id='NTUHCILAB/RoomDreamingModel', local_dir='/data/RoomDreamingModel'); \
     snapshot_download(repo_id='lllyasviel/control_v11f1p_sd15_depth', local_dir='/data/ControlNetModel/depth'); \
-    snapshot_download(repo_id='lllyasviel/control_v11p_sd15_seg', local_dir='/data/ControlNetModel/seg')"
+    snapshot_download(repo_id='lllyasviel/control_v11p_sd15_seg', local_dir='/data/ControlNetModel/seg'); \
+except Exception as e: \
+    print(f'Error downloading models: {str(e)}'); sys.exit(1)"
 
 # Debug: List downloaded files to verify
 RUN find /data -type f -exec ls -lh {} \; > /data_contents.txt
@@ -44,9 +55,6 @@ RUN apt-get update && apt-get install -y \
     ln -sf /usr/bin/python3.10 /usr/bin/python && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-# Upgrade pip in runtime stage
-RUN pip3 install --no-cache-dir --upgrade pip
 
 # Install Python dependencies with specific versions
 RUN pip3 install --no-cache-dir torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
