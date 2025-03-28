@@ -1,14 +1,30 @@
 # syntax=docker/dockerfile:1
 FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS builder
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    python3.10 python3-pip git && \
-    ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
-    apt-get clean
+RUN apt-get update && \
+apt-get install -y \
+python3.10 \
+python3-pip \
+libgl1-mesa-glx \
+libglib2.0-0 \
+git && \
+apt-get clean && \
+rm -rf /var/lib/apt/lists/* && \
+# Force create symlinks with -f flag
+ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
+ln -sf /usr/bin/python3.10 /usr/bin/python
 
 # Install huggingface_hub for model downloads
 RUN pip3 install --no-cache-dir huggingface_hub
+
+# Prevents Python from writing pyc files.
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Keeps Python from buffering stdout and stderr to avoid situations where
+# the application crashes without emitting any logs due to buffering.
+ENV PYTHONUNBUFFERED=1
+
+RUN pip install --upgrade pip
 
 # Pre-download models during build
 RUN python3 -c "from huggingface_hub import snapshot_download; \
@@ -24,23 +40,15 @@ FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS runtime
 # Copy preloaded models
 COPY --from=builder /data /data
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    python3.10 python3-pip libgl1-mesa-glx && \
-    ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
-    apt-get clean
-
 # Install Python dependencies with specific versions
-RUN pip3 install --no-cache-dir \
-    requests \
-    torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121 \
-    transformers==4.46.0 \
-    diffusers==0.31.0 \
-    controlnet_aux==0.0.6 \
-    mediapipe==0.10.5 \
-    xformers==0.0.27 \
-    accelerate==1.0.1 \
-    runpod  # Added for RunPod serverless compatibility
+RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
+RUN pip install transformers==4.46.0
+RUN pip install diffusers==0.31.0
+RUN pip install controlnet_aux==0.0.6
+RUN pip install mediapipe==0.10.5
+RUN pip install xformers==0.0.27
+RUN pip install accelerate==1.5.1
+RUN pip install runpod 
 
 # Copy application code
 COPY . /app
