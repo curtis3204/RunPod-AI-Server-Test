@@ -4,7 +4,11 @@ FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS builder
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     python3.10 python3-pip git && \
-    ln -sf /usr/bin/python3.10 /usr/bin/python3
+    ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
+    apt-get clean
+
+# Install huggingface_hub for model downloads
+RUN pip3 install --no-cache-dir huggingface_hub
 
 # Pre-download models during build
 RUN python3 -c "from huggingface_hub import snapshot_download; \
@@ -26,17 +30,17 @@ RUN apt-get update && apt-get install -y \
     ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
     apt-get clean
 
-RUN pip install \
-requests 
-
-# Install PyTorch ecosystem with specific versions - ensure compatibility
-RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
-RUN pip install transformers==4.46.0
-RUN pip install diffusers==0.31.0
-RUN pip install controlnet_aux==0.0.6
-RUN pip install mediapipe==0.10.5
-RUN pip install xformers==0.0.27
-RUN pip install accelerate==1.5.1
+# Install Python dependencies with specific versions
+RUN pip3 install --no-cache-dir \
+    requests \
+    torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121 \
+    transformers==4.46.0 \
+    diffusers==0.31.0 \
+    controlnet_aux==0.0.6 \
+    mediapipe==0.10.5 \
+    xformers==0.0.27 \
+    accelerate==1.0.1 \
+    runpod  # Added for RunPod serverless compatibility
 
 # Copy application code
 COPY . /app
