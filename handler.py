@@ -6,11 +6,11 @@ from diffusers import AutoPipelineForText2Image, ControlNetModel
 import gc
 import os
 
-# Debug: List model directory contents at runtime
-print("[Contents of /data/RoomDreamingModel]")
-for root, dirs, files in os.walk("/data/RoomDreamingModel"):
-    for file in files:
-        print(os.path.join(root, file))
+#  Debug: List model directory contents at runtime
+# print("[Contents of /data/RoomDreamingModel]")
+# for root, dirs, files in os.walk("/data/RoomDreamingModel"):
+#     for file in files:
+#         print(os.path.join(root, file))
 
 # Global pipeline initialization
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -31,6 +31,7 @@ controlnets = [
     )
 ]
 try:
+    print("[Loading RoomDreaming Pipeline...]")
     pipe = AutoPipelineForText2Image.from_pretrained(
         "/data/RoomDreamingModel",
         controlnet=controlnets,
@@ -42,13 +43,18 @@ try:
     pipe.enable_xformers_memory_efficient_attention()
     print("[RoomDreaming Pipeline loaded successfully]")
 except Exception as e:
-    print(f"Failed to load pipeline: {str(e)}")
+    print(f"[Failed to load pipeline: {str(e)}]")
     raise
 
 def decode_base64_image(base64_str, input_name="unknown"):
     try:
-        # Log the input for debugging
-        print(f"Decoding {input_name} base64 string: {base64_str[:50]}... (length: {len(base64_str)})")
+        # Log the raw input for debugging
+        print(f"[Decoding {input_name} base64 string: {base64_str[:50]}... (length: {len(base64_str)})]")
+
+        # Strip data URI prefix if present (e.g., "data:image/png;base64,")
+        if base64_str.startswith("data:image"):
+            base64_str = base64_str.split(",", 1)[1]
+            print(f"Stripped data URI prefix from {input_name}. New length: {len(base64_str)}")
         
         # Add padding if necessary
         padding_needed = len(base64_str) % 4
@@ -70,6 +76,7 @@ def decode_base64_image(base64_str, input_name="unknown"):
 def handler(event):
     try:
         input_data = event.get("input", {})
+        print(f"Received input: {input_data}")
         pos_prompt = input_data.get("pos_prompt", "")
         neg_prompt = input_data.get("neg_prompt", "")
         depth_image = input_data.get("depth_image", "")
@@ -80,8 +87,8 @@ def handler(event):
         if not (pos_prompt and depth_image and seg_image):
             return {"error": "Missing required inputs"}
 
-        depth_tensor = decode_base64_image(depth_image)
-        seg_tensor = decode_base64_image(seg_image)
+        depth_tensor = decode_base64_image(depth_image, "depth_image")
+        seg_tensor = decode_base64_image(seg_image, "seg_image")
 
         with torch.no_grad():
             image = pipe(

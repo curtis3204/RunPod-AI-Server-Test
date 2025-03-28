@@ -51,14 +51,14 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies with specific versions
-RUN pip3 install --no-cache-dir torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
-RUN pip3 install --no-cache-dir transformers==4.46.0
-RUN pip3 install --no-cache-dir diffusers==0.31.0
-RUN pip3 install --no-cache-dir controlnet_aux==0.0.6
-RUN pip3 install --no-cache-dir mediapipe==0.10.5
-RUN pip3 install --no-cache-dir xformers==0.0.27
-RUN pip3 install --no-cache-dir accelerate==1.0.1
-RUN pip3 install --no-cache-dir runpod
+RUN pip3 install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
+RUN pip3 install transformers==4.46.0
+RUN pip3 install diffusers==0.31.0
+RUN pip3 install controlnet_aux==0.0.6
+RUN pip3 install mediapipe==0.10.5
+RUN pip3 install xformers==0.0.27
+RUN pip3 install accelerate==1.0.1
+RUN pip3 install runpod
 
 # Copy application code
 COPY . /app
