@@ -43,12 +43,27 @@ except Exception as e:
     print(f"Failed to load pipeline: {str(e)}")
     raise
 
-def decode_base64_image(base64_str):
-    img_data = base64.b64decode(base64_str)
-    img_array = np.frombuffer(img_data, dtype=np.uint8)
-    img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-    img_tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).to(device) / 255.0
-    return img_tensor
+def decode_base64_image(base64_str, input_name="unknown"):
+    try:
+        # Log the input for debugging
+        print(f"Decoding {input_name} base64 string: {base64_str[:50]}... (length: {len(base64_str)})")
+        
+        # Add padding if necessary
+        padding_needed = len(base64_str) % 4
+        if padding_needed:
+            base64_str += "=" * (4 - padding_needed)
+            print(f"Added {4 - padding_needed} padding characters to {input_name}")
+
+        img_data = base64.b64decode(base64_str)
+        img_array = np.frombuffer(img_data, dtype=np.uint8)
+        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+        if img is None:
+            raise ValueError(f"Failed to decode {input_name} into an image")
+        img_tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).to(device) / 255.0
+        return img_tensor
+    except Exception as e:
+        print(f"Error decoding {input_name}: {str(e)}")
+        raise
 
 def handler(event):
     try:
