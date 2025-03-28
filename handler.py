@@ -7,13 +7,15 @@ import gc
 import os
 
 # Debug: List model directory contents at runtime
-print("Contents of /data/RoomDreamingModel at runtime:")
+print("[Contents of /data/RoomDreamingModel]")
 for root, dirs, files in os.walk("/data/RoomDreamingModel"):
     for file in files:
         print(os.path.join(root, file))
 
 # Global pipeline initialization
 device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"[Using device: {device}]")
+
 controlnets = [
     ControlNetModel.from_pretrained(
         "/data/ControlNetModel/depth",
@@ -38,7 +40,7 @@ try:
         safety_checker=None
     ).to(device)
     pipe.enable_xformers_memory_efficient_attention()
-    print("Pipeline loaded successfully")
+    print("[RoomDreaming Pipeline loaded successfully]")
 except Exception as e:
     print(f"Failed to load pipeline: {str(e)}")
     raise
