@@ -29,14 +29,8 @@ RUN mkdir -p /data/RoomDreamingModel
 RUN mkdir -p /data/ControlNetModel/depth
 RUN mkdir -p /data/ControlNetModel/seg
 
-
-RUN python3 -c "import sys; from huggingface_hub import snapshot_download; \
-try: \
-    snapshot_download(repo_id='NTUHCILAB/RoomDreamingModel', local_dir='/data/RoomDreamingModel'); \
-    snapshot_download(repo_id='lllyasviel/control_v11f1p_sd15_depth', local_dir='/data/ControlNetModel/depth'); \
-    snapshot_download(repo_id='lllyasviel/control_v11p_sd15_seg', local_dir='/data/ControlNetModel/seg'); \
-except Exception as e: \
-    print(f'Error downloading models: {str(e)}'); sys.exit(1)"
+# Download models using a properly formatted script
+RUN echo "import sys\nfrom huggingface_hub import snapshot_download\ntry:\n    snapshot_download(repo_id='NTUHCILAB/RoomDreamingModel', local_dir='/data/RoomDreamingModel')\n    snapshot_download(repo_id='lllyasviel/control_v11f1p_sd15_depth', local_dir='/data/ControlNetModel/depth')\n    snapshot_download(repo_id='lllyasviel/control_v11p_sd15_seg', local_dir='/data/ControlNetModel/seg')\nexcept Exception as e:\n    print(f'Error downloading models: {str(e)}')\n    sys.exit(1)" > /tmp/download_models.py && python3 /tmp/download_models.py
 
 # Debug: List downloaded files to verify
 RUN find /data -type f -exec ls -lh {} \; > /data_contents.txt
