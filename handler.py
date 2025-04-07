@@ -81,7 +81,6 @@ def handler(event):
                     negative_prompt=neg_prompt,
                     image=[depth_pil, seg_pil],
                     controlnet_conditioning_scale=[depth_weight, seg_weight],
-                    guidance_scale=7.5,
                     num_inference_steps=25,
                     num_steps=num_steps,
                     guidance_scale=guidance_scale,
