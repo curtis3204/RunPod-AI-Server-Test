@@ -9,6 +9,10 @@ from transformers import AutoImageProcessor, UperNetForSemanticSegmentation
 from Image_Segmentor.cv_utils import resize_image
 from Image_Segmentor.ade20k_map import COLOR_MAP
 
+import os
+
+MODEL_BASE_PATH = os.getenv("MODEL_STORAGE", "/runpod-volume/models")
+
 
 class ImageSegmentor:
 
@@ -18,9 +22,9 @@ class ImageSegmentor:
         # self.image_segmentor = UperNetForSemanticSegmentation.from_pretrained(
         #     "openmmlab/upernet-convnext-small")
         self.image_processor = AutoImageProcessor.from_pretrained(
-            "/data/ImageAnalysisModel/seg")
+            f"{MODEL_BASE_PATH}/ImageAnalysisModel/seg")
         self.image_segmentor = UperNetForSemanticSegmentation.from_pretrained(
-            "/data/ImageAnalysisModel/seg")
+            f"{MODEL_BASE_PATH}/ImageAnalysisModel/seg")
 
     @torch.inference_mode()
     def __call__(self, image: np.ndarray, **kwargs) -> PIL.Image.Image:

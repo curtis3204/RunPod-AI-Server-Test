@@ -8,6 +8,9 @@ from PIL import Image
 import PIL.Image
 from controlnet_aux import LeresDetector
 from Image_Segmentor.image_segmentor import ImageSegmentor
+import os
+
+MODEL_BASE_PATH = os.getenv("MODEL_STORAGE", "/runpod-volume/models")
 
 # Global pipeline initialization
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -15,13 +18,13 @@ print(f"[Using device: {device}]")
 
 controlnets = [
     ControlNetModel.from_pretrained(
-        "/data/ControlNetModel/depth",
+        f"{MODEL_BASE_PATH}/ControlNetModel/depth",
         torch_dtype=torch.float16,
         local_files_only=True,
         use_safetensors=False,
     ),
     ControlNetModel.from_pretrained(
-        "/data/ControlNetModel/seg",
+        f"{MODEL_BASE_PATH}/ControlNetModel/seg",
         torch_dtype=torch.float16,
         local_files_only=True,
         use_safetensors=False,
@@ -31,7 +34,7 @@ controlnets = [
 try:
     print("[Loading RoomDreaming Pipeline...]")
     image_generation_pipe = AutoPipelineForText2Image.from_pretrained(
-        "/data/RoomDreamingModel",
+        f"{MODEL_BASE_PATH}/RoomDreamingModel",
         controlnet=controlnets,
         torch_dtype=torch.float16,
         local_files_only=True,
@@ -43,7 +46,8 @@ try:
     # --------------------- Load depth and segmentation estimators --------------------- #
     print("[Loading depth and segmentation estimators...]")
     # Load depth estimator
-    leres = LeresDetector.from_pretrained("/data/ImageAnalysisModel/depth", )
+    leres = LeresDetector.from_pretrained(
+        f"{MODEL_BASE_PATH}/ImageAnalysisModel/depth", )
     # Load segmentation estimator
     ImageSegmentor()
     print("[Depth and segmentation estimators loaded successfully]")
