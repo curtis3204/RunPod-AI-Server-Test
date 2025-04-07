@@ -49,7 +49,7 @@ try:
     leres = LeresDetector.from_pretrained(
         f"{MODEL_BASE_PATH}/ImageAnalysisModel/depth", )
     # Load segmentation estimator
-    ImageSegmentor()
+    segmentor = ImageSegmentor()
     print("[Depth and segmentation estimators loaded successfully]")
 
 except Exception as e:
@@ -149,7 +149,7 @@ def process_segmentation(
     H, W = input_image.shape[:2]
     max_side = max(H, W)
 
-    seg_image, ade20k_id_list = ImageSegmentor(
+    seg_image, ade20k_id_list = segmentor(
         image=input_image,
         image_resolution=max_side,
         detect_resolution=max_side,
