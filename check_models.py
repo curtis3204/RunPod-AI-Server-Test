@@ -1,5 +1,6 @@
 from huggingface_hub import snapshot_download
 import os
+import argparse
 
 MODEL_PATHS = {
     "RoomDreamingModel": {
@@ -35,3 +36,12 @@ def check_and_download_models(base_path):
                               local_dir_use_symlinks=False)
         else:
             print(f"{name} already exists at {full_path}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--storage",
+                        default="/runpod-volume/models",
+                        help="Directory for model storage")
+    args = parser.parse_args()
+    check_and_download_models(args.storage)
