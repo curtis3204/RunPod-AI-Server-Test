@@ -33,7 +33,6 @@ RUN mkdir -p /data/ImageAnalysisModel/seg
 
 # Download models using the separate script
 COPY download_models.py /tmp/download_models.py
-COPY Preprocessor_ControlNet /tmp/Preprocessor_ControlNet
 RUN python3 /tmp/download_models.py
 
 # Debug: List downloaded files to verify

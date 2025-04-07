@@ -7,3 +7,4 @@ prompts/
 sdk/__pycache__/
 *.png
 test/
+test.py

@@ -6,11 +6,12 @@ import torch
 from controlnet_aux.util import HWC3, ade_palette
 from transformers import AutoImageProcessor, UperNetForSemanticSegmentation
 
-from Program.Preprocessor_ControlNet.cv_utils import resize_image
-from Program.Preprocessor_ControlNet.ade20k_map import COLOR_MAP
+from Image_Segmentor.cv_utils import resize_image
+from Image_Segmentor.ade20k_map import COLOR_MAP
 
 
 class ImageSegmentor:
+
     def __init__(self):
         # self.image_processor = AutoImageProcessor.from_pretrained(
         #     "openmmlab/upernet-convnext-small")
