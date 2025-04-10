@@ -9,6 +9,7 @@ import PIL.Image
 from controlnet_aux import LeresDetector
 from Image_Segmentor.image_segmentor import ImageSegmentor
 import os
+import random
 
 MODEL_BASE_PATH = os.getenv("MODEL_STORAGE", "/runpod-volume/models")
 
@@ -74,7 +75,7 @@ def handler(event):
             guidance_scale = float(input_data.get("guidance_scale", 7.5))
             seed_val = input_data.get("seed")
             if seed_val is None or seed_val == "None" or seed_val == "":
-                seed = 0
+                seed = random.randint(-1, 2147483647)
             else:
                 seed = int(seed_val)
 
