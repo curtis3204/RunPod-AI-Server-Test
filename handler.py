@@ -72,7 +72,11 @@ def handler(event):
             seg_weight = float(input_data.get("seg_control_weight", 0.5))
             num_steps = int(input_data.get("num_steps", 25))
             guidance_scale = float(input_data.get("guidance_scale", 7.5))
-            seed = int(input_data.get("seed", 0))
+            seed_val = input_data.get("seed")
+            if seed_val is None or seed_val == "None" or seed_val == "":
+                seed = 0
+            else:
+                seed = int(seed_val)
 
             print(f"pos_prompt: {pos_prompt}")
             print(f"neg_prompt: {neg_prompt}")
