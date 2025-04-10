@@ -63,6 +63,7 @@ def handler(event):
         print(f"Received input: {input_data}")
         task_type = input_data.get("task_type", "")
         if task_type == "image_generation":
+            print("[Start Image Generation]")
             pos_prompt = input_data.get("pos_prompt", "")
             neg_prompt = input_data.get("neg_prompt", "")
             depth_image = input_data.get("depth_image", "")
@@ -72,6 +73,18 @@ def handler(event):
             num_steps = int(input_data.get("num_steps", 25))
             guidance_scale = float(input_data.get("guidance_scale", 7.5))
             seed = int(input_data.get("seed", 0))
+
+            print(f"pos_prompt: {pos_prompt}")
+            print(f"neg_prompt: {neg_prompt}")
+            print(
+                f"depth_image: {depth_image[:50]}... (length: {len(depth_image)})"
+            )
+            print(f"seg_image: {seg_image[:50]}... (length: {len(seg_image)})")
+            print(f"depth_weight: {depth_weight}")
+            print(f"seg_weight: {seg_weight}")
+            print(f"num_steps: {num_steps}")
+            print(f"guidance_scale: {guidance_scale}")
+            print(f"seed: {seed}")
 
             if not (pos_prompt and depth_image and seg_image):
                 return {"error": "Missing required inputs"}
@@ -98,9 +111,14 @@ def handler(event):
 
             return {"image": image_base64_with_prefix}
         elif task_type == "image_analysis":
+            print("[Start Image Analysis]")
             original_image = input_data.get("original_image", "")
             if not original_image:
                 return {"error": "Missing required inputs"}
+
+            print(
+                f"original_image: {original_image[:50]}... (length: {len(original_image)})"
+            )
 
             original_image = decode_base64_to_np(original_image)
             result_dict = image_analysis_pipe(original_image)
